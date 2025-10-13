@@ -1,5 +1,6 @@
 package com.ecommerse.catalogo.model;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -13,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Document(collection = "productos")
+@Builder
 public class Producto {
     
     @Id

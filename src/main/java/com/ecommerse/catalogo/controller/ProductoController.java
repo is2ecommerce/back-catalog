@@ -1,5 +1,6 @@
 package com.ecommerse.catalogo.controller;
 
+import com.ecommerse.catalogo.dto.ProductoTO;
 import com.ecommerse.catalogo.model.Producto;
 import com.ecommerse.catalogo.service.ProductoService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -9,6 +10,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/productos")
@@ -51,5 +54,17 @@ public class ProductoController {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    }
+
+    @PostMapping("/create")
+    @ResponseStatus(HttpStatus.CREATED)
+    public String createProduct(@RequestBody ProductoTO pro){
+        return productoService.createProducto(pro);
+    }
+
+    @GetMapping("/get/product")
+    @ResponseStatus(HttpStatus.OK)
+    public List<Producto> getProduct(){
+        return productoService.getProducto();
     }
 }
