@@ -7,6 +7,10 @@ import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -125,6 +129,41 @@ public class ProductoController {
             return ResponseEntity.ok(productoActualizado);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @GetMapping("/paginated")
+    @Operation(summary = "Obtener productos con paginación", 
+               description = "Obtiene productos con paginación y ordenamiento. Parámetros opcionales: page (0), size (10), sort (nombre)")
+    public ResponseEntity<Page<Producto>> obtenerProductosConPaginacion(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nombre") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDir,
+            @RequestParam(required = false) String categoria) {
+        
+        try {
+            // Crear Sort basado en dirección
+            Sort sort = sortDir.equalsIgnoreCase("desc") ? 
+                Sort.by(sortBy).descending() : 
+                Sort.by(sortBy).ascending();
+            
+            // Crear Pageable
+            Pageable pageable = PageRequest.of(page, size, sort);
+            
+            Page<Producto> productos;
+            
+            // Si se especifica categoría, filtrar por categoría
+            if (categoria != null && !categoria.trim().isEmpty()) {
+                productos = productoService.obtenerProductosPorCategoriaConPaginacion(categoria, pageable);
+            } else {
+                productos = productoService.obtenerProductosConPaginacion(pageable);
+            }
+            
+            return ResponseEntity.ok(productos);
+            
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     

@@ -5,6 +5,8 @@ import com.ecommerse.catalogo.dto.StockUpdateTO;
 import com.ecommerse.catalogo.model.Producto;
 import com.ecommerse.catalogo.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -218,5 +220,25 @@ public class ProductoService {
         stockUpdate.setComentario(comentario);
         
         return actualizarStock(stockUpdate);
+    }
+    
+    // Método para obtener productos con paginación
+    public Page<Producto> obtenerProductosConPaginacion(Pageable pageable) {
+        try {
+            return productoRepository.findAll(pageable);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al obtener productos con paginación");
+        }
+    }
+    
+    // Método para obtener productos por categoría con paginación
+    public Page<Producto> obtenerProductosPorCategoriaConPaginacion(String categoria, Pageable pageable) {
+        try {
+            return productoRepository.findByCategoria(categoria, pageable);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al obtener productos por categoría con paginación");
+        }
     }
 }
