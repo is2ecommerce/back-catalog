@@ -67,4 +67,6 @@ public class ProductoController {
     public List<Producto> getProduct(){
         return productoService.getProducto();
     }
+    
+    
 }
