@@ -7,8 +7,12 @@ import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -94,6 +98,7 @@ public class ProductoController {
     public List<Producto> searchProducts(@RequestParam(name = "q", required = false) String query){
         return productoService.buscarProductos(query);
     }
+<<<<<<< Updated upstream
     
     
     @PutMapping("/{id}/sumar-stock")
@@ -131,4 +136,21 @@ public class ProductoController {
     
     
     
+=======
+
+    @GetMapping
+    public Page<Producto> listarProductos(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "nombre") String sortBy,
+            @RequestParam(defaultValue = "asc") String direction) {
+
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+        return productoService.listarProductos(pageable);
+    }
+>>>>>>> Stashed changes
 }
