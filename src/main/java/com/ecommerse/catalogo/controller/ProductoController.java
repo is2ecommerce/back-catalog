@@ -12,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.web.server.ResponseStatusException;
+
 import java.util.List;
 
 @RestController
@@ -92,4 +94,41 @@ public class ProductoController {
     public List<Producto> searchProducts(@RequestParam(name = "q", required = false) String query){
         return productoService.buscarProductos(query);
     }
+    
+    
+    @PutMapping("/{id}/sumar-stock")
+    @Operation(summary = "Sumar stock a producto", 
+               description = "Suma una cantidad específica al stock del producto (útil para compras, devoluciones)")
+    public ResponseEntity<Producto> sumarStock(
+            @PathVariable String id,
+            @RequestParam int cantidad,
+            @RequestParam(defaultValue = "COMPRA") String motivo,
+            @RequestParam(required = false) String comentario) {
+        try {
+            Producto productoActualizado = productoService.sumarStock(id, cantidad, motivo, comentario);
+            return ResponseEntity.ok(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @PutMapping("/{id}/restar-stock")
+    @Operation(summary = "Restar stock a producto", 
+               description = "Resta una cantidad específica al stock del producto (útil para ventas, productos dañados)")
+    public ResponseEntity<Producto> restarStock(
+            @PathVariable String id,
+            @RequestParam int cantidad,
+            @RequestParam(defaultValue = "VENTA") String motivo,
+            @RequestParam(required = false) String comentario) {
+        try {
+            Producto productoActualizado = productoService.restarStock(id, cantidad, motivo, comentario);
+            return ResponseEntity.ok(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    
+    
+    
 }
