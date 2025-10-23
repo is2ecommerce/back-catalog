@@ -3,6 +3,7 @@ package com.ecommerse.catalogo.controller;
 import com.ecommerse.catalogo.dto.ProductoTO;
 import com.ecommerse.catalogo.model.Producto;
 import com.ecommerse.catalogo.service.ProductoService;
+import java.math.BigDecimal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,5 +67,29 @@ public class ProductoController {
     @ResponseStatus(HttpStatus.OK)
     public List<Producto> getProduct(){
         return productoService.getProducto();
+    }
+
+    @GetMapping("/filter")
+    @Operation(summary = "Filtrar productos", description = "Filtra productos por múltiples criterios")
+    public List<Producto> filtrarProductos(
+            @RequestParam(required = false) BigDecimal precio_min,
+            @RequestParam(required = false) BigDecimal precio_max,
+            @RequestParam(required = false) String categoria,
+            @RequestParam(required = false) String marca,
+            @RequestParam(required = false) Boolean disponibilidad,
+            @RequestParam(required = false) Integer stock_min,
+            @RequestParam(required = false) String q
+    ) {
+        return productoService.filtrarProductos(
+            precio_min, precio_max, categoria, marca, 
+            disponibilidad, stock_min, q
+        );
+    }
+
+    @GetMapping("/search")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Buscar productos", description = "Buscar productos por texto (insensible a mayúsculas)")
+    public List<Producto> searchProducts(@RequestParam(name = "q", required = false) String query){
+        return productoService.buscarProductos(query);
     }
 }
