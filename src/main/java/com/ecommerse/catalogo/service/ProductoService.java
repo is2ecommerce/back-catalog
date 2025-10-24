@@ -15,6 +15,8 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import java.math.BigDecimal;
 import java.util.regex.Pattern;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 
 import java.util.ArrayList;
@@ -171,6 +173,7 @@ public class ProductoService {
         }
     }
 
+<<<<<<< Updated upstream
     // Método principal para actualizar stock
     public Producto actualizarStock(StockUpdateTO stockUpdate) {
         // Buscar el producto por ID
