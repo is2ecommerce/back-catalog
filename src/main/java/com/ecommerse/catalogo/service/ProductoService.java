@@ -173,7 +173,7 @@ public class ProductoService {
         }
     }
 
-<<<<<<< Updated upstream
+
     // Método principal para actualizar stock
     public Producto actualizarStock(StockUpdateTO stockUpdate) {
         // Buscar el producto por ID
