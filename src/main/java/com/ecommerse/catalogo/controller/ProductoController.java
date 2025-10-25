@@ -166,8 +166,14 @@ public class ProductoController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    
-    
-    
-    
+    @GetMapping("/Search")
+    public ResponseEntity<List<Producto>> searchProductss(
+            @RequestParam(name = "query", required = false) String query) {
+
+        List<Producto> results = productoService.searchProducts(query);
+        return ResponseEntity.ok(results);
+    }
+
+
+
 }

@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.math.BigDecimal;
@@ -19,16 +20,19 @@ public class Producto {
     
     @Id
     private String id;
-    
+    @TextIndexed
     private String nombre;
+    @TextIndexed
     private String descripcion;
     private BigDecimal precio;
+    @TextIndexed
     private String categoria;
     private List<String> atributos;
     private Double calificacion;
     private List<String> comentarios;
     private Boolean disponibilidad;
     private Integer stock;
+    @TextIndexed
     private String marca;
     private String garantia;
     private String multimedia; // URL de la imagen

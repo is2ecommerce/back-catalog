@@ -244,4 +244,12 @@ public class ProductoService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Error al obtener productos por categoría con paginación");
         }
     }
+
+    //Método para buscar producto en la base de datos
+    public List<Producto> searchProducts(String query) {
+        if (query == null || query.isBlank()) {
+            return productoRepository.findAll();
+        }
+        return productoRepository.searchByText(query);
+    }
 }
