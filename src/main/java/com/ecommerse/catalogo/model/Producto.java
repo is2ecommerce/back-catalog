@@ -35,7 +35,7 @@ public class Producto {
     @TextIndexed
     private String marca;
     private String garantia;
-    private String multimedia; // URL de la imagen
+    private List<String> multimedia;
 	
     
     public String getId() {
@@ -110,14 +110,11 @@ public class Producto {
 	public void setGarantia(String garantia) {
 		this.garantia = garantia;
 	}
-	public String getMultimedia() {
+	public List<String> getMultimedia() {
 		return multimedia;
 	}
-	public void setMultimedia(String multimedia) {
+	public void setMultimedia(List<String> multimedia) {
 		this.multimedia = multimedia;
 	}
-	
-	
-    
-    
+
 }

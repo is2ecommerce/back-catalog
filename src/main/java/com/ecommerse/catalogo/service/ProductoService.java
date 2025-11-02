@@ -13,10 +13,9 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Criteria;
 import java.math.BigDecimal;
+import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 
 
 import java.util.ArrayList;
@@ -251,5 +250,12 @@ public class ProductoService {
             return productoRepository.findAll();
         }
         return productoRepository.searchByText(query);
+    }
+
+    //Metodo para obtener la galeria de imagenes
+    public List<String> obtenerGaleriaId(String id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Producto no encontrado con id: " + id));
+        return producto.getMultimedia();
     }
 }

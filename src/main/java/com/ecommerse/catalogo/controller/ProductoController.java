@@ -173,7 +173,12 @@ public class ProductoController {
         List<Producto> results = productoService.searchProducts(query);
         return ResponseEntity.ok(results);
     }
-
-
+    @GetMapping("/{id}/gallery")
+    @Operation(
+            summary = "Obtener galería de imágenes del producto",
+            description = "Devuelve todas las URLs de las imágenes asociadas a un producto por su ID")
+    public List<String> obtenerGaleria(@PathVariable String id) {
+        return productoService.obtenerGaleriaId(id);
+    }
 
 }
