@@ -413,4 +413,74 @@ public class ProductoService {
                 "Error al obtener productos inactivos");
         }
     }
+
+    /**
+     * Agrega una nueva imagen/URL multimedia a un producto
+     * @param id ID del producto
+     * @param nuevaImagenUrl URL de la nueva imagen
+     * @return Producto actualizado
+     */
+    public Producto agregarImagen(String id, String nuevaImagenUrl) {
+        if (nuevaImagenUrl == null || nuevaImagenUrl.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La URL de la imagen no puede estar vacía");
+        }
+        
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        
+        List<String> multimedia = producto.getMultimedia() != null 
+                ? new ArrayList<>(producto.getMultimedia()) 
+                : new ArrayList<>();
+        
+        // Verificar si la imagen ya existe
+        if (multimedia.contains(nuevaImagenUrl.trim())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La imagen ya existe en este producto");
+        }
+        
+        multimedia.add(nuevaImagenUrl.trim());
+        producto.setMultimedia(multimedia);
+        
+        return productoRepository.save(producto);
+    }
+
+    /**
+     * Elimina una imagen/URL multimedia específica de un producto
+     * @param id ID del producto
+     * @param imagenUrl URL de la imagen a eliminar
+     * @return Producto actualizado
+     */
+    public Producto eliminarImagen(String id, String imagenUrl) {
+        if (imagenUrl == null || imagenUrl.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La URL de la imagen no puede estar vacía");
+        }
+        
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        
+        List<String> multimedia = producto.getMultimedia();
+        if (multimedia == null || multimedia.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El producto no tiene imágenes para eliminar");
+        }
+        
+        boolean removed = multimedia.remove(imagenUrl.trim());
+        if (!removed) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "La imagen especificada no existe en este producto");
+        }
+        
+        producto.setMultimedia(multimedia);
+        return productoRepository.save(producto);
+    }
+
+    /**
+     * Elimina todas las imágenes de un producto
+     * @param id ID del producto
+     * @return Producto actualizado
+     */
+    public Producto eliminarTodasLasImagenes(String id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        
+        producto.setMultimedia(new ArrayList<>());
+        return productoRepository.save(producto);
+    }
 }

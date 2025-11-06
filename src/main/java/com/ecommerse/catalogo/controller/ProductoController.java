@@ -402,4 +402,49 @@ public class ProductoController {
         }
     }
 
+    // ==================== ENDPOINTS DE GESTIÓN DE IMÁGENES ====================
+    
+    @PostMapping("/{id}/images")
+    @Operation(
+            summary = "Agregar imagen a producto",
+            description = "Agrega una nueva URL de imagen al producto. La URL debe ser válida y no puede estar duplicada.")
+    public ResponseEntity<Producto> agregarImagen(
+            @PathVariable String id,
+            @RequestParam String imageUrl) {
+        try {
+            Producto productoActualizado = productoService.agregarImagen(id, imageUrl);
+            return ResponseEntity.status(HttpStatus.CREATED).body(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @DeleteMapping("/{id}/images")
+    @Operation(
+            summary = "Eliminar imagen específica de producto",
+            description = "Elimina una URL de imagen específica del producto. La URL debe existir en la lista de multimedia.")
+    public ResponseEntity<Producto> eliminarImagen(
+            @PathVariable String id,
+            @RequestParam String imageUrl) {
+        try {
+            Producto productoActualizado = productoService.eliminarImagen(id, imageUrl);
+            return ResponseEntity.ok(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @DeleteMapping("/{id}/images/all")
+    @Operation(
+            summary = "Eliminar todas las imágenes de producto",
+            description = "Elimina todas las URLs de imágenes del producto, dejando la lista de multimedia vacía.")
+    public ResponseEntity<Producto> eliminarTodasLasImagenes(@PathVariable String id) {
+        try {
+            Producto productoActualizado = productoService.eliminarTodasLasImagenes(id);
+            return ResponseEntity.ok(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+
 }
