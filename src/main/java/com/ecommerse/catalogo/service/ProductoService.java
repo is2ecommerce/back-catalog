@@ -1,6 +1,7 @@
 package com.ecommerse.catalogo.service;
 
 import com.ecommerse.catalogo.dto.ComentarioTO;
+import com.ecommerse.catalogo.dto.DisponibilidadTO;
 import com.ecommerse.catalogo.dto.ProductoTO;
 import com.ecommerse.catalogo.dto.StockUpdateTO;
 import com.ecommerse.catalogo.model.Comentario;
@@ -353,5 +354,63 @@ public class ProductoService {
         
         producto.setCalificacion(Math.round(nuevaCalificacion * 10.0) / 10.0);
         return productoRepository.save(producto);
+    }
+
+    /**
+     * Obtiene la disponibilidad y stock de un producto específico
+     * @param id ID del producto
+     * @return DisponibilidadTO con información de disponibilidad
+     */
+    public DisponibilidadTO obtenerDisponibilidad(String id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        
+        String estado;
+        String mensaje;
+        
+        if (!producto.getDisponibilidad()) {
+            estado = "INACTIVO";
+            mensaje = "Producto marcado como no disponible";
+        } else if (producto.getStock() == null || producto.getStock() <= 0) {
+            estado = "SIN_STOCK";
+            mensaje = "Producto sin stock disponible";
+        } else {
+            estado = "DISPONIBLE";
+            mensaje = "Producto disponible para compra";
+        }
+        
+        return DisponibilidadTO.builder()
+                .id(producto.getId())
+                .nombre(producto.getNombre())
+                .disponibilidad(producto.getDisponibilidad())
+                .stock(producto.getStock())
+                .estado(estado)
+                .mensaje(mensaje)
+                .build();
+    }
+
+    /**
+     * Obtiene todos los productos inactivos o con stock = 0
+     * @return Lista de productos inactivos
+     */
+    public List<Producto> obtenerProductosInactivos() {
+        try {
+            Query query = new Query();
+            
+            // Productos con disponibilidad = false OR stock <= 0
+            Criteria criteriasInactivos = new Criteria().orOperator(
+                Criteria.where("disponibilidad").is(false),
+                Criteria.where("stock").lte(0),
+                Criteria.where("stock").is(null)
+            );
+            
+            query.addCriteria(criteriasInactivos);
+            
+            return mongoTemplate.find(query, Producto.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
+                "Error al obtener productos inactivos");
+        }
     }
 }

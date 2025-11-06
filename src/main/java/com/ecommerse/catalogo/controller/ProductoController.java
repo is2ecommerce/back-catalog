@@ -1,6 +1,7 @@
 package com.ecommerse.catalogo.controller;
 
 import com.ecommerse.catalogo.dto.ComentarioTO;
+import com.ecommerse.catalogo.dto.DisponibilidadTO;
 import com.ecommerse.catalogo.dto.ProductoTO;
 import com.ecommerse.catalogo.model.Comentario;
 import com.ecommerse.catalogo.model.Producto;
@@ -223,6 +224,34 @@ public class ProductoController {
         try {
             Producto productoActualizado = productoService.actualizarCalificacion(id, calificacion);
             return ResponseEntity.ok(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+
+    // ==================== ENDPOINTS DE DISPONIBILIDAD ====================
+    
+    @GetMapping("/{id}/availability")
+    @Operation(
+            summary = "Obtener disponibilidad de producto",
+            description = "Devuelve el estado de disponibilidad y stock de un producto específico. Estados posibles: DISPONIBLE, SIN_STOCK, INACTIVO")
+    public ResponseEntity<DisponibilidadTO> obtenerDisponibilidad(@PathVariable String id) {
+        try {
+            DisponibilidadTO disponibilidad = productoService.obtenerDisponibilidad(id);
+            return ResponseEntity.ok(disponibilidad);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @GetMapping("/inactive")
+    @Operation(
+            summary = "Obtener productos inactivos",
+            description = "Devuelve todos los productos que están inactivos (disponibilidad = false) o tienen stock = 0")
+    public ResponseEntity<List<Producto>> obtenerProductosInactivos() {
+        try {
+            List<Producto> productosInactivos = productoService.obtenerProductosInactivos();
+            return ResponseEntity.ok(productosInactivos);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).build();
         }
