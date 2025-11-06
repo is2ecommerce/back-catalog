@@ -18,9 +18,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.RestController;
-
 import org.springframework.web.server.ResponseStatusException;
 
+import com.ecommerse.catalogo.model.ProductChange;
+import com.ecommerse.catalogo.repository.ProductChangeRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 
 @RestController
@@ -31,25 +37,125 @@ public class ProductoController {
     @Autowired
     private ProductoService productoService;
     
+    // nueva inyección para persistir/consultar cambios
+    @Autowired
+    private ProductChangeRepository productChangeRepository;
+
+    // ObjectMapper para serializar campos modificados/snapshot
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @PutMapping("/editarProducto")
     @Operation(summary = "Editar producto", description = "Editar un producto del catálogo")
 	public ResponseEntity<Producto> editarCatalogo(@RequestBody Producto producto){
     	Producto obj = productoService.buscarProducto(producto.getId());
 		
 		if (obj != null) {
-			obj.setAtributos(producto.getAtributos());
-			obj.setCalificacion(producto.getCalificacion());
-			obj.setCategoria(producto.getCategoria());
-			obj.setComentarios(producto.getComentarios());
-			obj.setDescripcion(producto.getDescripcion());
-			obj.setDisponibilidad(producto.getDisponibilidad());
-			obj.setGarantia(producto.getGarantia());
-			obj.setMarca(producto.getMarca());
-			obj.setMultimedia(producto.getMultimedia());
-			obj.setNombre(producto.getNombre());
-			obj.setPrecio(producto.getPrecio());
-			obj.setStock(producto.getStock());			
-			productoService.nuevoProducto(producto);
+            Map<String, Object> modified = new HashMap<>();
+
+			// replace direct setters with comparisons and record changes
+			if (producto.getAtributos() != null && !producto.getAtributos().equals(obj.getAtributos())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getAtributos());
+                change.put("new", producto.getAtributos());
+                modified.put("atributos", change);
+                obj.setAtributos(producto.getAtributos());
+            }
+            if (producto.getCalificacion() != null && !producto.getCalificacion().equals(obj.getCalificacion())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getCalificacion());
+                change.put("new", producto.getCalificacion());
+                modified.put("calificacion", change);
+                obj.setCalificacion(producto.getCalificacion());
+            }
+            if (producto.getCategoria() != null && !producto.getCategoria().equals(obj.getCategoria())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getCategoria());
+                change.put("new", producto.getCategoria());
+                modified.put("categoria", change);
+                obj.setCategoria(producto.getCategoria());
+            }
+            if (producto.getComentarios() != null && !producto.getComentarios().equals(obj.getComentarios())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getComentarios());
+                change.put("new", producto.getComentarios());
+                modified.put("comentarios", change);
+                obj.setComentarios(producto.getComentarios());
+            }
+            if (producto.getDescripcion() != null && !producto.getDescripcion().equals(obj.getDescripcion())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getDescripcion());
+                change.put("new", producto.getDescripcion());
+                modified.put("descripcion", change);
+                obj.setDescripcion(producto.getDescripcion());
+            }
+            if (producto.getDisponibilidad() != null && !producto.getDisponibilidad().equals(obj.getDisponibilidad())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getDisponibilidad());
+                change.put("new", producto.getDisponibilidad());
+                modified.put("disponibilidad", change);
+                obj.setDisponibilidad(producto.getDisponibilidad());
+            }
+            if (producto.getGarantia() != null && !producto.getGarantia().equals(obj.getGarantia())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getGarantia());
+                change.put("new", producto.getGarantia());
+                modified.put("garantia", change);
+                obj.setGarantia(producto.getGarantia());
+            }
+            if (producto.getMarca() != null && !producto.getMarca().equals(obj.getMarca())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getMarca());
+                change.put("new", producto.getMarca());
+                modified.put("marca", change);
+                obj.setMarca(producto.getMarca());
+            }
+            if (producto.getMultimedia() != null && !producto.getMultimedia().equals(obj.getMultimedia())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getMultimedia());
+                change.put("new", producto.getMultimedia());
+                modified.put("multimedia", change);
+                obj.setMultimedia(producto.getMultimedia());
+            }
+            if (producto.getNombre() != null && !producto.getNombre().equals(obj.getNombre())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getNombre());
+                change.put("new", producto.getNombre());
+                modified.put("nombre", change);
+                obj.setNombre(producto.getNombre());
+            }
+            if (producto.getPrecio() != null && !producto.getPrecio().equals(obj.getPrecio())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getPrecio());
+                change.put("new", producto.getPrecio());
+                modified.put("precio", change);
+                obj.setPrecio(producto.getPrecio());
+            }
+            if (producto.getStock() != null && !producto.getStock().equals(obj.getStock())) {
+                Map<String,Object> change = new HashMap<>();
+                change.put("old", obj.getStock());
+                change.put("new", producto.getStock());
+                modified.put("stock", change);
+                obj.setStock(producto.getStock());
+            }
+
+			// guardar producto actualizado usando servicio
+			productoService.nuevoProducto(obj);
+
+            // persistir historial si hay cambios
+            if (!modified.isEmpty()) {
+                try {
+                    ProductChange pc = new ProductChange();
+                    pc.setProductId(obj.getId());
+                    pc.setChangeDate(LocalDateTime.now());
+                    pc.setChangeType("UPDATE");
+                    pc.setModifiedFieldsJson(objectMapper.writeValueAsString(modified));
+                    productChangeRepository.save(pc);
+                } catch (Exception ex) {
+                    // no interrumpir la actualización por fallo de logging
+                }
+            }
+
 		}else {
 			return new ResponseEntity<>(obj,HttpStatus.INTERNAL_SERVER_ERROR);
 		}
@@ -59,6 +165,23 @@ public class ProductoController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar producto", description = "Elimina un producto del catálogo")
     public ResponseEntity<Void> eliminarProducto(@PathVariable String id) {
+        // capturar estado antes de eliminar
+        Producto existing = productoService.buscarProducto(id);
+        if (existing == null) {
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }
+
+        try {
+            ProductChange pc = new ProductChange();
+            pc.setProductId(id);
+            pc.setChangeDate(LocalDateTime.now());
+            pc.setChangeType("DELETE");
+            pc.setModifiedFieldsJson(objectMapper.writeValueAsString(existing)); // snapshot antiguo
+            productChangeRepository.save(pc);
+        } catch (Exception ex) {
+            // continuar aunque falle el registro
+        }
+
         boolean eliminado = productoService.eliminarProducto(id);
         if (eliminado) {
             return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -69,7 +192,29 @@ public class ProductoController {
     @PostMapping("/create")
     @ResponseStatus(HttpStatus.CREATED)
     public String createProduct(@RequestBody ProductoTO pro){
-        return productoService.createProducto(pro);
+        String createdId = productoService.createProducto(pro);
+        try {
+            Producto created = productoService.buscarProducto(createdId);
+            if (created != null) {
+                ProductChange pc = new ProductChange();
+                pc.setProductId(created.getId());
+                pc.setChangeDate(LocalDateTime.now());
+                pc.setChangeType("CREATE");
+                pc.setModifiedFieldsJson(objectMapper.writeValueAsString(created));
+                productChangeRepository.save(pc);
+            }
+        } catch (Exception ex) {
+            // continuar aunque falle el registro
+        }
+        return createdId;
+    }
+
+    // Nuevo endpoint para obtener historial de cambios del producto
+    @GetMapping("/{id}/history")
+    @Operation(summary = "Obtener historial de cambios de un producto", description = "Devuelve historial (fecha, campos modificados y tipo)")
+    public ResponseEntity<List<ProductChange>> obtenerHistorialCambios(@PathVariable String id) {
+        List<ProductChange> cambios = productChangeRepository.findByProductIdOrderByChangeDateDesc(id);
+        return ResponseEntity.ok(cambios);
     }
 
     @GetMapping("/get/product")
