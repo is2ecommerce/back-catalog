@@ -19,7 +19,7 @@ public class ProductoTO {
     private String categoria;
     private List<String> atributos;
     private Double calificacion;
-    private List<String> comentarios;
+    private List<String> comentarios; // Mantener como List<String> para compatibilidad con clientes antiguos
     private Boolean disponibilidad;
     private Integer stock;
     private String marca;

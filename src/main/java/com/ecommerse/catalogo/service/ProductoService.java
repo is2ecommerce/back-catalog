@@ -1,7 +1,9 @@
 package com.ecommerse.catalogo.service;
 
+import com.ecommerse.catalogo.dto.ComentarioTO;
 import com.ecommerse.catalogo.dto.ProductoTO;
 import com.ecommerse.catalogo.dto.StockUpdateTO;
+import com.ecommerse.catalogo.model.Comentario;
 import com.ecommerse.catalogo.model.Producto;
 import com.ecommerse.catalogo.repository.ProductoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +15,7 @@ import org.springframework.web.server.ResponseStatusException;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Criteria;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.NoSuchElementException;
 import java.util.regex.Pattern;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -59,6 +62,25 @@ public class ProductoService {
 
     public String createProducto(ProductoTO productoTO) {
         try{
+            // Convertir comentarios de List<String> a List<Comentario> si vienen datos antiguos
+            List<Comentario> comentariosLegacy = new ArrayList<>();
+            if (productoTO.getComentarios() != null && !productoTO.getComentarios().isEmpty()) {
+                for (String texto : productoTO.getComentarios()) {
+                    comentariosLegacy.add(Comentario.builder()
+                            .texto(texto)
+                            .autor("Sistema")
+                            .calificacion(0.0)
+                            .fecha(LocalDateTime.now())
+                            .build());
+                }
+            }
+            
+            // Adaptar multimedia: DTO trae un único String; convertir a lista si viene informado
+            List<String> multimediaList = new ArrayList<>();
+            if (productoTO.getMultimedia() != null && !productoTO.getMultimedia().isBlank()) {
+                multimediaList.add(productoTO.getMultimedia());
+            }
+
             Producto product = Producto.builder()
                     .nombre(productoTO.getNombre())
                     .descripcion(productoTO.getDescripcion())
@@ -66,12 +88,12 @@ public class ProductoService {
                     .categoria(productoTO.getCategoria())
                     .atributos(productoTO.getAtributos())
                     .calificacion(productoTO.getCalificacion())
-                    .comentarios(productoTO.getComentarios())
+                    .comentarios(comentariosLegacy)
                     .disponibilidad(productoTO.getDisponibilidad())
                     .stock(productoTO.getStock())
                     .marca(productoTO.getMarca())
                     .garantia(productoTO.getGarantia())
-                    .multimedia(productoTO.getMultimedia())
+                    .multimedia(multimediaList)
                     .build();
 
 
@@ -257,5 +279,79 @@ public class ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Producto no encontrado con id: " + id));
         return producto.getMultimedia();
+    }
+
+    public Producto agregarComentario(String id, ComentarioTO comentarioTO) {
+        // Validar calificación
+        if (comentarioTO.getCalificacion() == null || 
+            comentarioTO.getCalificacion() < 1.0 || 
+            comentarioTO.getCalificacion() > 5.0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "La calificación debe estar entre 1.0 y 5.0");
+        }
+        
+        // Validar campos requeridos
+        if (comentarioTO.getTexto() == null || comentarioTO.getTexto().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El texto del comentario es obligatorio");
+        }
+        
+        // Buscar producto
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        
+        // Crear comentario (autor siempre "Anónimo" hasta implementar autenticación)
+        Comentario comentario = Comentario.builder()
+                .autor("Anónimo")
+                .texto(comentarioTO.getTexto())
+                .calificacion(comentarioTO.getCalificacion())
+                .fecha(LocalDateTime.now())
+                .build();
+        
+        // Agregar a la lista
+        List<Comentario> comentarios = producto.getComentarios() != null 
+                ? new ArrayList<>(producto.getComentarios()) 
+                : new ArrayList<>();
+        comentarios.add(comentario);
+        producto.setComentarios(comentarios);
+        
+        // Recalcular calificación promedio
+        double promedioCalificacion = comentarios.stream()
+                .filter(c -> c.getCalificacion() != null && c.getCalificacion() > 0)
+                .mapToDouble(Comentario::getCalificacion)
+                .average()
+                .orElse(0.0);
+        producto.setCalificacion(Math.round(promedioCalificacion * 10.0) / 10.0); // Redondear a 1 decimal
+        
+        return productoRepository.save(producto);
+    }
+    
+    /**
+     * Obtiene todos los comentarios de un producto
+     * @param id ID del producto
+     * @return Lista de comentarios
+     */
+    public List<Comentario> obtenerComentarios(String id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        return producto.getComentarios() != null ? producto.getComentarios() : new ArrayList<>();
+    }
+    
+    /**
+     * Actualiza manualmente la calificación de un producto (sin comentario)
+     * @param id ID del producto
+     * @param nuevaCalificacion Nueva calificación (1.0 a 5.0)
+     * @return Producto actualizado
+     */
+    public Producto actualizarCalificacion(String id, Double nuevaCalificacion) {
+        if (nuevaCalificacion == null || nuevaCalificacion < 1.0 || nuevaCalificacion > 5.0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "La calificación debe estar entre 1.0 y 5.0");
+        }
+        
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado"));
+        
+        producto.setCalificacion(Math.round(nuevaCalificacion * 10.0) / 10.0);
+        return productoRepository.save(producto);
     }
 }

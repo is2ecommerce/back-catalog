@@ -29,7 +29,7 @@ public class Producto {
     private String categoria;
     private List<String> atributos;
     private Double calificacion;
-    private List<String> comentarios;
+    private List<Comentario> comentarios; // Cambiado de List<String> a List<Comentario>
     private Boolean disponibilidad;
     private Integer stock;
     @TextIndexed
@@ -80,10 +80,10 @@ public class Producto {
 	public void setCalificacion(Double calificacion) {
 		this.calificacion = calificacion;
 	}
-	public List<String> getComentarios() {
+	public List<Comentario> getComentarios() {
 		return comentarios;
 	}
-	public void setComentarios(List<String> comentarios) {
+	public void setComentarios(List<Comentario> comentarios) {
 		this.comentarios = comentarios;
 	}
 	public Boolean getDisponibilidad() {

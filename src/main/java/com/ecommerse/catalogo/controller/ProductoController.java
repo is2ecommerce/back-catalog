@@ -1,6 +1,8 @@
 package com.ecommerse.catalogo.controller;
 
+import com.ecommerse.catalogo.dto.ComentarioTO;
 import com.ecommerse.catalogo.dto.ProductoTO;
+import com.ecommerse.catalogo.model.Comentario;
 import com.ecommerse.catalogo.model.Producto;
 import com.ecommerse.catalogo.service.ProductoService;
 import java.math.BigDecimal;
@@ -179,6 +181,51 @@ public class ProductoController {
             description = "Devuelve todas las URLs de las imágenes asociadas a un producto por su ID")
     public List<String> obtenerGaleria(@PathVariable String id) {
         return productoService.obtenerGaleriaId(id);
+    }
+    
+    // ==================== ENDPOINTS DE COMENTARIOS ====================
+    
+    @PostMapping("/{id}/comentarios")
+    @Operation(
+            summary = "Agregar comentario a producto",
+            description = "Agrega un comentario con calificación a un producto. La calificación del producto se recalcula automáticamente como promedio de todos los comentarios.")
+    public ResponseEntity<Producto> agregarComentario(
+            @PathVariable String id,
+            @RequestBody ComentarioTO comentarioTO) {
+        try {
+            Producto productoActualizado = productoService.agregarComentario(id, comentarioTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @GetMapping("/{id}/comentarios")
+    @Operation(
+            summary = "Obtener comentarios de producto",
+            description = "Devuelve todos los comentarios de un producto incluyendo autor, texto, calificación y fecha")
+    public ResponseEntity<List<Comentario>> obtenerComentarios(@PathVariable String id) {
+        try {
+            List<Comentario> comentarios = productoService.obtenerComentarios(id);
+            return ResponseEntity.ok(comentarios);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    
+    @PutMapping("/{id}/calificacion")
+    @Operation(
+            summary = "Actualizar calificación de producto",
+            description = "Actualiza manualmente la calificación de un producto (sin agregar comentario). Calificación debe estar entre 1.0 y 5.0")
+    public ResponseEntity<Producto> actualizarCalificacion(
+            @PathVariable String id,
+            @RequestParam Double calificacion) {
+        try {
+            Producto productoActualizado = productoService.actualizarCalificacion(id, calificacion);
+            return ResponseEntity.ok(productoActualizado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).build();
+        }
     }
 
 }
