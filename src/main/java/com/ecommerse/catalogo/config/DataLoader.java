@@ -67,9 +67,6 @@ public class DataLoader implements CommandLineRunner {
                         "1 año",
                         List.of("img/audifonos1.jpg")
                 ),
-
-                // ---- Continúas agregando hasta completar los 15 ----
-                // Para ahorrar espacio, te genero 13 más al final si quieres.
                 crearProductoSimple("P003", "Smartwatch ActiveFit 2", "Tecnología", "Samsung"),
                 crearProductoSimple("P004", "Televisor 55'' 4K Ultra HD", "Hogar", "LG"),
                 crearProductoSimple("P005", "Silla Ergonómica ProOffice", "Oficina", "ErgoPlus"),
