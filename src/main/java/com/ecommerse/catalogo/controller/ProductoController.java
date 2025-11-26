@@ -30,8 +30,9 @@ import java.util.Map;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/productos")
-@Tag(name = "Productos", description = "API para eliminar productos del catálogo")
+@RequestMapping("/productos") // Fix: Coincidir con baseUrl del frontend
+@CrossOrigin(origins = "http://localhost:4200") // Fix: Permitir peticiones desde Angular
+@Tag(name = "Productos", description = "API para gestionar productos del catálogo")
 public class ProductoController {
     
     @Autowired
@@ -45,9 +46,11 @@ public class ProductoController {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @PutMapping("/editarProducto")
+    // Fix: Usar PUT /{id} estándar REST
+    @PutMapping("/{id}")
     @Operation(summary = "Editar producto", description = "Editar un producto del catálogo")
-	public ResponseEntity<Producto> editarCatalogo(@RequestBody Producto producto){
+	public ResponseEntity<Producto> editarCatalogo(@PathVariable String id, @RequestBody Producto producto){
+        producto.setId(id); // Asegurar que el ID del path coincida con el objeto
     	Producto obj = productoService.buscarProducto(producto.getId());
 		
 		if (obj != null) {
@@ -189,7 +192,8 @@ public class ProductoController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @PostMapping("/create")
+    // Fix: Usar POST raíz para crear
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public String createProduct(@RequestBody ProductoTO pro){
         String createdId = productoService.createProducto(pro);
@@ -217,7 +221,8 @@ public class ProductoController {
         return ResponseEntity.ok(cambios);
     }
 
-    @GetMapping("/get/product")
+    // Fix: Usar GET raíz para obtener todos (sin paginación)
+    @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<Producto> getProduct(){
         return productoService.getProducto();
@@ -280,7 +285,8 @@ public class ProductoController {
         }
     }
     
-    @GetMapping("/paginated")
+    // Fix: Usar GET raíz PERO filtrado por parámetro 'page' para no chocar con getProduct()
+    @GetMapping(params = "page")
     @Operation(summary = "Obtener productos con paginación", 
                description = "Obtiene productos con paginación y ordenamiento. Parámetros opcionales: page (0), size (10), sort (nombre)")
     public ResponseEntity<Page<Producto>> obtenerProductosConPaginacion(
