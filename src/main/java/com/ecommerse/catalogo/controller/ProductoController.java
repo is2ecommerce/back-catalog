@@ -28,10 +28,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Collections; // Importante para evitar errores de listas nulas
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/productos")
-@CrossOrigin(origins = "*") // Permitir acceso desde cualquier origen para evitar bloqueos
+@CrossOrigin(origins = "*")
 @Tag(name = "Productos", description = "API para gestionar productos del catálogo")
 public class ProductoController {
     
@@ -217,7 +219,7 @@ public class ProductoController {
     }
 
     @GetMapping("/filter")
-    @Operation(summary = "Filtrar productos", description = "Filtra productos por múltiples criterios")
+    @Operation(summary = "Filtrar productos", description = "Filtra productos por múltiples criterios en memoria")
     public List<Producto> filtrarProductos(
             @RequestParam(required = false) BigDecimal precio_min,
             @RequestParam(required = false) BigDecimal precio_max,
@@ -225,12 +227,72 @@ public class ProductoController {
             @RequestParam(required = false) String marca,
             @RequestParam(required = false) Boolean disponibilidad,
             @RequestParam(required = false) Integer stock_min,
+            @RequestParam(required = false) Double calificacion_min,
             @RequestParam(required = false) String q
     ) {
-        return productoService.filtrarProductos(
-            precio_min, precio_max, categoria, marca, 
-            disponibilidad, stock_min, q
-        );
+        // DEBUG: Imprimir filtros recibidos
+        System.out.println("--- FILTRANDO PRODUCTOS ---");
+        System.out.println("Precio Min: " + precio_min);
+        System.out.println("Precio Max: " + precio_max);
+        System.out.println("Categoría: " + categoria);
+        System.out.println("Stock Min: " + stock_min);
+        System.out.println("Calif Min: " + calificacion_min);
+
+        List<Producto> todos = productoService.getProducto();
+        
+        if (todos == null) return new ArrayList<>();
+
+        return todos.stream()
+            .filter(p -> {
+                // Filtro de Búsqueda General (q)
+                if (q != null && !q.trim().isEmpty()) {
+                    String query = q.toLowerCase();
+                    boolean matchNombre = p.getNombre() != null && p.getNombre().toLowerCase().contains(query);
+                    boolean matchDesc = p.getDescripcion() != null && p.getDescripcion().toLowerCase().contains(query);
+                    if (!matchNombre && !matchDesc) return false;
+                }
+
+                // Filtro de Precio Mínimo
+                if (precio_min != null && p.getPrecio() != null) {
+                    if (p.getPrecio().compareTo(precio_min) < 0) return false;
+                }
+
+                // Filtro de Precio Máximo
+                if (precio_max != null && p.getPrecio() != null) {
+                    if (p.getPrecio().compareTo(precio_max) > 0) return false;
+                }
+
+                // Filtro de Categoría (Ignorando mayúsculas/minúsculas)
+                if (categoria != null && !categoria.trim().isEmpty()) {
+                    if (p.getCategoria() == null || !p.getCategoria().trim().equalsIgnoreCase(categoria.trim())) {
+                        return false;
+                    }
+                }
+
+                // Filtro de Marca
+                if (marca != null && !marca.trim().isEmpty()) {
+                    if (p.getMarca() == null || !p.getMarca().equalsIgnoreCase(marca)) return false;
+                }
+
+                // Filtro de Disponibilidad (En Stock)
+                if (Boolean.TRUE.equals(disponibilidad)) {
+                    if (p.getStock() == null || p.getStock() <= 0) return false;
+                }
+
+                // Filtro de Stock Mínimo específico
+                if (stock_min != null) {
+                    if (p.getStock() == null || p.getStock() < stock_min) return false;
+                }
+
+                // Filtro de Calificación (Estrellas)
+                if (calificacion_min != null) {
+                    double rating = p.getCalificacion() != null ? p.getCalificacion() : 0.0;
+                    if (rating < calificacion_min) return false;
+                }
+
+                return true;
+            })
+            .collect(Collectors.toList());
     }
 
     @GetMapping("/search")
