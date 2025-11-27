@@ -103,7 +103,7 @@ public class DataLoader implements CommandLineRunner {
                 20,
                 marca,
                 "1 año",
-                List.of("img/default.jpg")
+                List.of("https://www.canon.com.mx/datacenter/image/resize-center/328x328/imagenesproducto/fichero/3512_EOS_6D_Mark_II_01.jpg/")
         );
     }
 }

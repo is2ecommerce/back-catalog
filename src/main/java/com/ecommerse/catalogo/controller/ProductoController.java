@@ -17,7 +17,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.ecommerse.catalogo.model.ProductChange;
@@ -28,35 +27,32 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.Collections; // Importante para evitar errores de listas nulas
 
 @RestController
-@RequestMapping("/productos") // Fix: Coincidir con baseUrl del frontend
-@CrossOrigin(origins = "http://localhost:4200") // Fix: Permitir peticiones desde Angular
+@RequestMapping("/productos")
+@CrossOrigin(origins = "*") // Permitir acceso desde cualquier origen para evitar bloqueos
 @Tag(name = "Productos", description = "API para gestionar productos del catálogo")
 public class ProductoController {
     
     @Autowired
     private ProductoService productoService;
     
-    // nueva inyección para persistir/consultar cambios
     @Autowired
     private ProductChangeRepository productChangeRepository;
 
-    // ObjectMapper para serializar campos modificados/snapshot
     @Autowired
     private ObjectMapper objectMapper;
 
-    // Fix: Usar PUT /{id} estándar REST
     @PutMapping("/{id}")
     @Operation(summary = "Editar producto", description = "Editar un producto del catálogo")
 	public ResponseEntity<Producto> editarCatalogo(@PathVariable String id, @RequestBody Producto producto){
-        producto.setId(id); // Asegurar que el ID del path coincida con el objeto
+        producto.setId(id);
     	Producto obj = productoService.buscarProducto(producto.getId());
 		
 		if (obj != null) {
             Map<String, Object> modified = new HashMap<>();
 
-			// replace direct setters with comparisons and record changes
 			if (producto.getAtributos() != null && !producto.getAtributos().equals(obj.getAtributos())) {
                 Map<String,Object> change = new HashMap<>();
                 change.put("old", obj.getAtributos());
@@ -142,10 +138,8 @@ public class ProductoController {
                 obj.setStock(producto.getStock());
             }
 
-			// guardar producto actualizado usando servicio
 			productoService.nuevoProducto(obj);
 
-            // persistir historial si hay cambios
             if (!modified.isEmpty()) {
                 try {
                     ProductChange pc = new ProductChange();
@@ -155,7 +149,6 @@ public class ProductoController {
                     pc.setModifiedFieldsJson(objectMapper.writeValueAsString(modified));
                     productChangeRepository.save(pc);
                 } catch (Exception ex) {
-                    // no interrumpir la actualización por fallo de logging
                 }
             }
 
@@ -168,7 +161,6 @@ public class ProductoController {
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar producto", description = "Elimina un producto del catálogo")
     public ResponseEntity<Void> eliminarProducto(@PathVariable String id) {
-        // capturar estado antes de eliminar
         Producto existing = productoService.buscarProducto(id);
         if (existing == null) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -179,10 +171,9 @@ public class ProductoController {
             pc.setProductId(id);
             pc.setChangeDate(LocalDateTime.now());
             pc.setChangeType("DELETE");
-            pc.setModifiedFieldsJson(objectMapper.writeValueAsString(existing)); // snapshot antiguo
+            pc.setModifiedFieldsJson(objectMapper.writeValueAsString(existing));
             productChangeRepository.save(pc);
         } catch (Exception ex) {
-            // continuar aunque falle el registro
         }
 
         boolean eliminado = productoService.eliminarProducto(id);
@@ -192,7 +183,6 @@ public class ProductoController {
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    // Fix: Usar POST raíz para crear
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public String createProduct(@RequestBody ProductoTO pro){
@@ -208,12 +198,10 @@ public class ProductoController {
                 productChangeRepository.save(pc);
             }
         } catch (Exception ex) {
-            // continuar aunque falle el registro
         }
         return createdId;
     }
 
-    // Nuevo endpoint para obtener historial de cambios del producto
     @GetMapping("/{id}/history")
     @Operation(summary = "Obtener historial de cambios de un producto", description = "Devuelve historial (fecha, campos modificados y tipo)")
     public ResponseEntity<List<ProductChange>> obtenerHistorialCambios(@PathVariable String id) {
@@ -221,11 +209,11 @@ public class ProductoController {
         return ResponseEntity.ok(cambios);
     }
 
-    // Fix: Usar GET raíz para obtener todos (sin paginación)
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     public List<Producto> getProduct(){
-        return productoService.getProducto();
+        List<Producto> list = productoService.getProducto();
+        return list != null ? list : Collections.emptyList();
     }
 
     @GetMapping("/filter")
@@ -285,7 +273,6 @@ public class ProductoController {
         }
     }
     
-    // Fix: Usar GET raíz PERO filtrado por parámetro 'page' para no chocar con getProduct()
     @GetMapping(params = "page")
     @Operation(summary = "Obtener productos con paginación", 
                description = "Obtiene productos con paginación y ordenamiento. Parámetros opcionales: page (0), size (10), sort (nombre)")
@@ -297,36 +284,26 @@ public class ProductoController {
             @RequestParam(required = false) String categoria) {
         
         try {
-            // Crear Sort basado en dirección
-            Sort sort = sortDir.equalsIgnoreCase("desc") ? 
-                Sort.by(sortBy).descending() : 
-                Sort.by(sortBy).ascending();
-            
-            // Crear Pageable
+            Sort sort = sortDir.equalsIgnoreCase("desc") ? Sort.by(sortBy).descending() : Sort.by(sortBy).ascending();
             Pageable pageable = PageRequest.of(page, size, sort);
-            
             Page<Producto> productos;
             
-            // Si se especifica categoría, filtrar por categoría
             if (categoria != null && !categoria.trim().isEmpty()) {
                 productos = productoService.obtenerProductosPorCategoriaConPaginacion(categoria, pageable);
             } else {
                 productos = productoService.obtenerProductosConPaginacion(pageable);
             }
             
+            if (productos == null) {
+                return ResponseEntity.ok(Page.empty());
+            }
             return ResponseEntity.ok(productos);
             
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    @GetMapping("/Search")
-    public ResponseEntity<List<Producto>> searchProductss(
-            @RequestParam(name = "query", required = false) String query) {
 
-        List<Producto> results = productoService.searchProducts(query);
-        return ResponseEntity.ok(results);
-    }
     @GetMapping("/{id}/gallery")
     @Operation(
             summary = "Obtener galería de imágenes del producto",

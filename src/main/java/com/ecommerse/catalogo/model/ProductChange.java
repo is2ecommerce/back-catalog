@@ -1,25 +1,26 @@
 package com.ecommerse.catalogo.model;
 
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Document(collection = "product_changes")
-@Builder
 public class ProductChange {
-
     @Id
-    private String id; // cambié Long a String para usar ObjectId de Mongo
+    private String id;
     private String productId;
+    private String changeType; // UPDATE, DELETE, CREATE
     private LocalDateTime changeDate;
-    private String modifiedFieldsJson;
-    private String changeType;
+    private String modifiedFieldsJson; // Snapshot o JSON de cambios
 
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getProductId() { return productId; }
+    public void setProductId(String productId) { this.productId = productId; }
+    public String getChangeType() { return changeType; }
+    public void setChangeType(String changeType) { this.changeType = changeType; }
+    public LocalDateTime getChangeDate() { return changeDate; }
+    public void setChangeDate(LocalDateTime changeDate) { this.changeDate = changeDate; }
+    public String getModifiedFieldsJson() { return modifiedFieldsJson; }
+    public void setModifiedFieldsJson(String modifiedFieldsJson) { this.modifiedFieldsJson = modifiedFieldsJson; }
 }
